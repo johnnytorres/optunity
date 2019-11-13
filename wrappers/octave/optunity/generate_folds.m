@@ -29,8 +29,13 @@ if isempty(options.clusters)
     options = rmfield(options, 'clusters');
 end
 
+if options.num_instances < options.num_folds
+    fprintf('num instances: %d num folds: %d\n', options.num_instances, options.num_folds);
+end
+
 assert(options.num_instances >= options.num_folds, ...
-    'Number of instances less than number of folds!');
+'Number of instances less than number of folds!');
+
 
 [sock, pid, cleaner] = comm_launch();
 

@@ -5,10 +5,15 @@ function folds = get_folds(obj)
     if obj.regenerate_folds || isempty(obj.current_folds)
         n_tasks = length(obj.x);
         for n=1:n_tasks  
-            fprintf('generating fold for task: %d \r', n);          
-            obj.current_folds{n} = generate_folds(size(obj.x{n}, 1), 'num_folds', obj.num_folds, ...
-                'num_iter', obj.num_iter, 'strata', obj.strata, 'clusters', obj.clusters);
+            num_instances = size(obj.x{n}, 1);
+            fprintf('generating folds for task: %d \r', n);          
+            % obj.current_folds{n} = generate_folds(num_instances, 'num_folds', obj.num_folds, ...
+            %     'num_iter', obj.num_iter, 'strata', obj.strata, 'clusters', obj.clusters);
+            % a simple Kfold method to avoid issue with sockets creations ...
+            %   error: bind failed with error 48 (Address already in use)
+            obj.current_folds{n} = datasplitind( num_instances, obj.num_folds, true);
         end
+        fprintf('\n');          
     end
     folds = obj.current_folds;
 end % get_folds

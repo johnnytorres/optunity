@@ -10,7 +10,6 @@ function result = feval(obj, pars)
         n_tasks = length(obj.x);
         for fold = 1:obj.num_folds            
             for n=1:n_tasks                
-                fprintf('iteration: %d fold: %d task: %d \r', iter, fold, n);        
                 x = obj.x{n};            
                 task_fold = folds{n};
                 x_train{n} = x(task_fold(:, iter) ~= fold, :);
@@ -22,7 +21,7 @@ function result = feval(obj, pars)
                 end
             end
             pars = setfield(pars, 'iteration', iter);
-            pars = setfield(pars, 'fold', fold);
+            pars = setfield(pars, 'fold', fold)
             if isempty(obj.y)
                 result_per_fold = obj.fun(x_train, x_test, pars)                
             else
@@ -31,6 +30,7 @@ function result = feval(obj, pars)
             performances(fold, iter) = result_per_fold;
         end
     end
+    fprintf('\n'); 
     results_per_iter = arrayfun(@(x) obj.aggregator(performances(:, x)), 1:obj.num_iter)
     result = mean(results_per_iter);
 end % feval

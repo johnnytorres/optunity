@@ -49,7 +49,7 @@ pid = popen(cmd, "r");
 fflush(stdout);
 [sock, info] = accept(servSock);
 disconnect(servSock);
-close(servSock);
+%close(servSock);
 
 if pid == -1
     error("Error launching Optunity back-end.");

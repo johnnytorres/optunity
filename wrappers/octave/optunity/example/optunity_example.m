@@ -51,7 +51,7 @@ end
 
 %% draw a figure to illustrate the call log of all solvers
 if drawfig
-    figure; hold on;
+    hf = figure(); hold on;
     plot(grid_details.call_log.args.x, grid_details.call_log.args.y, 'r+','LineWidth', 2);
     plot(rnd_details.call_log.args.x, rnd_details.call_log.args.y, 'k+','LineWidth', 2);
     plot(nm_details.call_log.args.x, nm_details.call_log.args.y, 'm', 'LineWidth', 3);
@@ -93,6 +93,7 @@ if drawfig
        optima(end+1) = cma_details.optimum;
        ticks{end+1} = 'CMA-ES';
     end
+    print (hf, "hp_search.pdf", "-dpdflatexstandalone");
     
     figure; hold on;
     
@@ -121,3 +122,4 @@ call_log = struct('args',struct('x',[1 1 2 2], 'y', [1 2 1 2]), ...
 x = (1:10)';
 cvf = cross_validate(@optunity_cv_fun, x);
 performance = cvf(struct('x',1,'y',2));
+disp(performance)

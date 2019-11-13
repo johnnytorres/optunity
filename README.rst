@@ -20,6 +20,12 @@
 
 =========
 
+Changes:
+This fork modifies the octave wrapper to support multitask datasets. 
+See example octave_cv_multitask.m
+
+=========
+
 Optunity is a library containing various optimizers for hyperparameter tuning.
 Hyperparameter tuning is a recurrent problem in many machine learning tasks,
 both supervised and unsupervised. Tuning examples include optimizing 

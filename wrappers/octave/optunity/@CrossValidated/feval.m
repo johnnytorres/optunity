@@ -7,18 +7,30 @@ function result = feval(obj, pars)
     folds = get_folds(obj);
     performances = zeros(obj.num_folds, obj.num_iter);
     for iter = 1:obj.num_iter
-        for fold = 1:obj.num_folds
-            x_train = obj.x(folds(:, iter) ~= fold, :);
-            x_test = obj.x(folds(:, iter) == fold, :);
-            if isempty(obj.y)
-                performances(fold, iter) = obj.fun(x_train, x_test, pars);
-            else
-                y_train = obj.y(folds(:, iter) ~= fold, :);
-                y_test = obj.y(folds(:, iter) == fold, :);
-                performances(fold, iter) = obj.fun(x_train, y_train, x_test, y_test, pars);
+        n_tasks = length(obj.x);
+        for fold = 1:obj.num_folds            
+            for n=1:n_tasks                
+                fprintf('iteration: %d fold: %d task: %d \r', iter, fold, n);        
+                x = obj.x{n};            
+                task_fold = folds{n};
+                x_train{n} = x(task_fold(:, iter) ~= fold, :);
+                x_test{n} = x(task_fold(:, iter) == fold, :);
+                if ~ isempty(obj.y)
+                    y = obj.y{n};
+                    y_train{n} = y(task_fold(:, iter) ~= fold, :);
+                    y_test{n} = y(task_fold(:, iter) == fold, :);
+                end
             end
+            pars = setfield(pars, 'iteration', iter);
+            pars = setfield(pars, 'fold', fold);
+            if isempty(obj.y)
+                result_per_fold = obj.fun(x_train, x_test, pars)                
+            else
+                result_per_fold = obj.fun(x_train, y_train, x_test, y_test, pars)
+            end
+            performances(fold, iter) = result_per_fold;
         end
     end
-    results_per_iter = arrayfun(@(x) obj.aggregator(performances(:, x)), 1:obj.num_iter);
+    results_per_iter = arrayfun(@(x) obj.aggregator(performances(:, x)), 1:obj.num_iter)
     result = mean(results_per_iter);
 end % feval

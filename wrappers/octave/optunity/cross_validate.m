@@ -41,11 +41,11 @@ function cv = cross_validate(fun, x, varargin)
 %% process varargin
 defaults = struct('num_folds', 10, 'y', [], 'strata', [], ...
     'folds', [], 'num_iter', 1, 'regenerate_folds', false, ...
-    'clusters', [], 'aggregator', @mean);
+    'clusters', [], 'aggregator', @mean, 'desc', '');
 options = process_varargin(defaults, varargin, false);
 
 cv = CrossValidated(fun, x, options.y, options.strata, options.clusters, ...
     options.num_folds, options.num_iter, options.folds, options.regenerate_folds, ...
-    options.aggregator);
+    options.aggregator, options.desc);
 
 end

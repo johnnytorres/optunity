@@ -21,7 +21,9 @@ function result = feval(obj, pars)
                 end
             end
             pars = setfield(pars, 'iteration', iter);
-            pars = setfield(pars, 'fold', fold)
+            pars = setfield(pars, 'fold', fold);
+            disp(obj.desc)
+            disp(pars)
             if isempty(obj.y)
                 result_per_fold = obj.fun(x_train, x_test, pars)                
             else

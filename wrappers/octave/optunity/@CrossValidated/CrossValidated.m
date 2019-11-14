@@ -1,8 +1,9 @@
 function obj = CrossValidated(fun, x, y, strata, clusters, num_folds, ...
-                             num_iter, folds, regenerate_folds, aggregator)
+                             num_iter, folds, regenerate_folds, aggregator, desc)
 
 
     obj.fun = fun;
+    obj.desc = desc;
     if isempty(x)
         error('x cannot be empty.');
     end

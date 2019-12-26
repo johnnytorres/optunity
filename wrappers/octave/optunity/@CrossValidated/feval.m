@@ -20,10 +20,10 @@ function result = feval(obj, pars)
                     y_test{n} = y(task_fold(:, iter) == fold, :);
                 end
             end
-            pars = setfield(pars, 'iteration', iter);
-            pars = setfield(pars, 'fold', fold);
             disp(obj.desc)
             disp(pars)
+            pars = setfield(pars, 'iteration', iter);
+            pars = setfield(pars, 'fold', fold);
             if isempty(obj.y)
                 result_per_fold = obj.fun(x_train, x_test, pars)                
             else

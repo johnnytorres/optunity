@@ -34,61 +34,103 @@ parallelize = options.parallelize;
 options = rmfield(options, 'parallelize');
 
 %% launch Optunity subprocess
-[sock, pid, cleaner] = comm_launch();
+% [sock, pid, cleaner] = comm_launch();
 
-pipe_send = @(data) comm_writepipe(sock, comm_json_encode(data));
-pipe_receive = @() comm_json_decode(comm_readpipe(sock));
+% pipe_send = @(data) comm_writepipe(sock, comm_json_encode(data));
+% pipe_receive = @() comm_json_decode(comm_readpipe(sock));
 
-%% initialize solver
-msg = struct('solver', solver, ...
-    'optimize', struct('maximize', options.maximize, ...
-    'max_evals', options.max_evals));
-if isstruct(options.constraints)
-    msg.constraints = options.constraints;
-    if ~isnan(options.default)
-        msg.default = options.default;
-    end
-end
-if isstruct(options.call_log)
-    msg.call_log = options.call_log;
-end
-pipe_send(msg);
+% %% initialize solver
+% msg = struct('solver', solver, ...
+%     'optimize', struct('maximize', options.maximize, ...
+%     'max_evals', options.max_evals));
+% if isstruct(options.constraints)
+%     msg.constraints = options.constraints;
+%     if ~isnan(options.default)
+%         msg.default = options.default;
+%     end
+% end
+% if isstruct(options.call_log)
+%     msg.call_log = options.call_log;
+% end
+% pipe_send(msg);
 
-%% iteratively send function evaluation results until solved
-reply = struct();
-while true
-    reply = pipe_receive();
+% %% iteratively send function evaluation results until solved
+% reply = struct();
+% while true
+%     reply = pipe_receive();
     
-    if isfield(reply, 'solution') || isfield(reply, 'error_msg');
-        break;
-    end
+%     if isfield(reply, 'solution') || isfield(reply, 'error_msg');
+%         break;
+%     end
     
-    if iscell(reply)
-        results = zeros(numel(reply), 1);
-        if parallelize
-            parfor ii=1:numel(reply)
-                results(ii) = f(reply{ii});
-            end
-        else
-            for ii=1:numel(reply)
-                results(ii) = f(reply{ii});
-            end
+%     if iscell(reply)
+%         results = zeros(numel(reply), 1);
+%         if parallelize
+%             parfor ii=1:numel(reply)
+%                 results(ii) = f(reply{ii});
+%             end
+%         else
+%             for ii=1:numel(reply)
+%                 results(ii) = f(reply{ii});
+%             end
+%         end
+%         msg = struct('values', results);
+%     else
+%         msg = struct('value', f(reply));
+%     end
+    
+%     pipe_send(msg);
+% end
+
+% if isfield(reply, 'error_msg')
+%     display('Oops ... something went wrong in Optunity');
+%     display(['Last request: ', comm_json_encode(msg)]);
+%     error(reply.error_msg);
+% end
+
+% solution = reply.solution;
+% details = reply;
+
+    pkg load linear-algebra
+    hparams = solver;
+    hparams = rmfield(hparams, 'solver_name');
+    hpnames = fieldnames(hparams);
+
+    for i=1:length(hpnames)
+        hpname = hpnames{i}
+        hpvalues{i} = getfield(hparams, hpname);
+    end
+
+    hpcandidates = cartprod(hpvalues{:});
+    best_result_index = 1;
+
+    for i=1:length(hpcandidates)
+        opts = struct ();
+        for j=1:length(hpnames)
+            opts = setfield(opts, hpnames{j}, hpcandidates(i, j) );
         end
-        msg = struct('values', results);
-    else
-        msg = struct('value', f(reply));
+
+        results(i) = f(opts);
+
+        if results(best_result_index) > results(i)
+            best_result_index=i;
+        end
+        
     end
-    
-    pipe_send(msg);
-end
 
-if isfield(reply, 'error_msg')
-    display('Oops ... something went wrong in Optunity');
-    display(['Last request: ', comm_json_encode(msg)]);
-    error(reply.error_msg);
-end
+    solution = struct ();
+    for j=1:length(hpnames)
+        solution = setfield(solution, hpnames{j}, hpcandidates(best_result_index, j) );
+    end
 
-solution = reply.solution;
-details = reply;
+    cargs = struct();
+    for j=1:length(hpnames)
+        cargs = setfield(cargs, hpnames{j}, hpcandidates(:,j)' );        
+    end
 
+    details = struct ();
+    details = setfield(details, {1}, 'optimum', results(best_result_index));
+    details = setfield(details, {1}, 'solution', solution);
+    details = setfield(details, {1}, 'call_log', {1}, 'args', cargs);
+    details = setfield(details, {1}, 'call_log', {1}, 'values', results );        
 end

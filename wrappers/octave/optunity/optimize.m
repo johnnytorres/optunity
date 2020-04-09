@@ -101,7 +101,12 @@ options = rmfield(options, 'parallelize');
         hpvalues{i} = getfield(hparams, hpname);
     end
 
-    hpcandidates = cartprod(hpvalues{:});
+    if length(hpvalues) > 1
+        hpcandidates = cartprod(hpvalues{:});
+    else
+        hpcandidates = hpvalues{:}'
+    end
+
     best_result_index = 1;
 
     for i=1:length(hpcandidates)

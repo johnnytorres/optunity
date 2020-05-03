@@ -28,10 +28,16 @@ defaults = struct('maximize', true, 'max_evals', 0, ...
     'constraints', NaN, ...
     'call_log', NaN, ...
     'default', NaN, ...
-    'parallelize', false);
+    'parallelize', false, ...
+    'model_opts_path', ''
+    );
 options = process_varargin(defaults, varargin, true);
 parallelize = options.parallelize;
 options = rmfield(options, 'parallelize');
+model_opts_path = getfield(options, 'model_opts_path')
+options = rmfield(options, 'model_opts_path');
+
+
 
 %% launch Optunity subprocess
 % [sock, pid, cleaner] = comm_launch();
@@ -108,25 +114,37 @@ options = rmfield(options, 'parallelize');
     end
 
     best_result_index = 1;
+    num_hp=length(hpcandidates);
 
-    for i=1:length(hpcandidates)
-        opts = struct ();
+    for i=1:num_hp
+        fprintf('HYPERPARAMETERS SEARCH  %d of: %d \n', i, num_hp);          
+        if exist(model_opts_path, 'file')
+            model_opts = loadjson(model_opts_path);
+        else
+            model_opts = struct();
+        end
+        
         for j=1:length(hpnames)
-            opts = setfield(opts, hpnames{j}, hpcandidates(i, j) );
+            model_opts = setfield(model_opts, hpnames{j}, hpcandidates(i, j) );
         end
 
-        results(i) = f(opts);
+        tinit=time();
+        results(i) = f(model_opts);
+        tend=time();
+        running_time(i)=tend-tinit;
 
-        if results(best_result_index) > results(i)
+        if results(best_result_index) >= results(i)
             best_result_index=i;
+            best_model_opts = model_opts;
         end
         
     end
 
-    solution = struct ();
-    for j=1:length(hpnames)
-        solution = setfield(solution, hpnames{j}, hpcandidates(best_result_index, j) );
-    end
+    % solution = struct ();
+    % for j=1:length(hpnames)
+    %     solution = setfield(solution, hpnames{j}, hpcandidates(best_result_index, j) );
+    % end
+    solution = best_model_opts;
 
     cargs = struct();
     for j=1:length(hpnames)
@@ -135,7 +153,10 @@ options = rmfield(options, 'parallelize');
 
     details = struct ();
     details = setfield(details, {1}, 'optimum', results(best_result_index));
+    details = setfield(details, {1}, 'optimum_running_time', running_time(best_result_index));
     details = setfield(details, {1}, 'solution', solution);
     details = setfield(details, {1}, 'call_log', {1}, 'args', cargs);
     details = setfield(details, {1}, 'call_log', {1}, 'values', results );        
+    details = setfield(details, {1}, 'call_log', {1}, 'running_time', running_time );        
+
 end

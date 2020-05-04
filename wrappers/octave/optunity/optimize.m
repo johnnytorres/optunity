@@ -37,6 +37,10 @@ options = rmfield(options, 'parallelize');
 model_opts_path = getfield(options, 'model_opts_path')
 options = rmfield(options, 'model_opts_path');
 
+if exist(model_opts_path, 'file')
+    disp('hpfile exits!')
+    model_opts = loadjson(model_opts_path)
+end
 
 
 %% launch Optunity subprocess
@@ -117,7 +121,7 @@ options = rmfield(options, 'model_opts_path');
     num_hp=length(hpcandidates);
 
     for i=1:num_hp
-        fprintf('HYPERPARAMETERS SEARCH  %d of: %d \n', i, num_hp);          
+                 
         if exist(model_opts_path, 'file')
             model_opts = loadjson(model_opts_path);
         else
@@ -133,11 +137,20 @@ options = rmfield(options, 'model_opts_path');
         tend=time();
         running_time(i)=tend-tinit;
 
-        if results(best_result_index) >= results(i)
-            best_result_index=i;
-            best_model_opts = model_opts;
+        if options.maximize
+            if results(best_result_index) <= results(i)
+                best_result_index=i;
+                best_model_opts = model_opts;
+            end
+        else
+            if results(best_result_index) >= results(i)
+                best_result_index=i;
+                best_model_opts = model_opts;
+            end
         end
-        
+
+        fprintf('HYPERPARAMETERS SEARCH  %d of: %d  t: %d result: %d best: %d\n', i, num_hp, running_time(i) ,results(i), results(best_result_index) ); 
+
     end
 
     % solution = struct ();

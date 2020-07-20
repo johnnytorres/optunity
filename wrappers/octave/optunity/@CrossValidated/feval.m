@@ -8,22 +8,31 @@ function result = feval(obj, pars)
     performances = zeros(obj.num_folds, obj.num_iter);
     for iter = 1:obj.num_iter
         n_tasks = length(obj.x);
-        for fold = 1:obj.num_folds            
-            for n=1:n_tasks                
-                x = obj.x{n};            
-                task_fold = folds{n};
-                x_train{n} = x(task_fold(:, iter) ~= fold, :);
-                x_test{n} = x(task_fold(:, iter) == fold, :);
-                if ~ isempty(obj.y)
+        for fold = 1:obj.num_folds        
+            for n=1:n_tasks    
+                if obj.num_folds == 1         
+                    x = obj.x{n};      
+                    x_train{n} = x;
+                    x_test{n} = x;
                     y = obj.y{n};
-                    y_train{n} = y(task_fold(:, iter) ~= fold, :);
-                    y_test{n} = y(task_fold(:, iter) == fold, :);
+                    y_train{n} = y;
+                    y_test{n} = y;    
+                else
+                    x = obj.x{n};            
+                    task_fold = folds{n};
+                    x_train{n} = x(task_fold(:, iter) ~= fold, :);
+                    x_test{n} = x(task_fold(:, iter) == fold, :);
+                    if ~ isempty(obj.y)
+                        y = obj.y{n};
+                        y_train{n} = y(task_fold(:, iter) ~= fold, :);
+                        y_test{n} = y(task_fold(:, iter) == fold, :);
+                    end
                 end
             end
             disp(obj.desc)
             disp(pars)
             pars = setfield(pars, 'iteration', iter);
-            pars = setfield(pars, 'fold', fold);
+            pars = setfield(pars, 'fold', fold);                     
             if isempty(obj.y)
                 result_per_fold = obj.fun(x_train, x_test, pars)                
             else
